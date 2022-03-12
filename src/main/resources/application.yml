@@ -1,0 +1,22 @@
+spring:
+  h2 :
+    console:
+      enabled: true
+      path: /h2-console
+
+  datasource:
+    type: com.zaxxer.hikari.HikariDataSource
+    url: jdbc:h2:file:./db/batch
+    username: batch
+    password:
+
+
+  batch:
+    jdbc:
+      initialize-schema: always
+    job:
+      enabled: false
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
