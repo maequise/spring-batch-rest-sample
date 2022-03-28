@@ -8,11 +8,18 @@ import org.springframework.cache.Cache;
 import java.util.List;
 
 public class InMemoryWriter implements ItemWriter<ConfigInputDto> {
-    @Autowired
     public Cache cache;
+
+    public InMemoryWriter(Cache cache){
+        this.cache = cache;
+    }
 
     @Override
     public void write(List<? extends ConfigInputDto> items) throws Exception {
+        items.forEach(item -> {
+            cache.put(item.getNameProperty(), item.getValueProperty());
+        });
 
+        System.out.println("trest");
     }
 }

@@ -93,7 +93,22 @@ public class AbstractExcelReader<T> extends AbstractExcelStreamReader<T> impleme
             while(cells.hasNext()){
                 Cell cell = cells.next();
 
-                lineBuilder.append(cell.getStringCellValue())
+                switch (cell.getCellType().name()){
+                    case "NUMERIC" :
+                        lineBuilder.append(cell.getNumericCellValue());
+                        break;
+                    case "STRING":
+                        lineBuilder.append(cell.getStringCellValue());
+                        break;
+                    case "BLANK":
+                        lineBuilder.append("");
+                        break;
+                    case "BOOLEAN":
+                        lineBuilder.append(cell.getBooleanCellValue());
+                        break;
+                }
+
+                lineBuilder
                         .append(";");
             }
 
@@ -113,6 +128,10 @@ public class AbstractExcelReader<T> extends AbstractExcelStreamReader<T> impleme
         Assert.notNull(lineMapper, "You must set a LineMapper !");
         //Assert.notNull(nameSheet, "You must provide a sheet name");
         //throw new IllegalStateException("You must implement this method !");
+
+        if(this.rowsToSkip != 0){
+            this.currentRow = this.rowsToSkip;
+        }
     }
 
     @Override
@@ -131,6 +150,7 @@ public class AbstractExcelReader<T> extends AbstractExcelStreamReader<T> impleme
     public void close() throws ItemStreamException {
         closeResource();
         closeWorkbook();
+        resetStates();
     }
 
     @Override

@@ -1,18 +1,21 @@
 package com.example.springbatch.configuration;
 
 import com.example.springbatch.EndExcelLine;
+import com.example.springbatch.domain.ConfigInputDto;
 import com.example.springbatch.domain.Person;
 import com.example.springbatch.entities.PersonEntity;
 import com.example.springbatch.listeners.JobListener;
 import com.example.springbatch.listeners.StepListener;
 import com.example.springbatch.processors.PersonProcessor;
 import com.example.springbatch.reader.ExcelAdvancedReader;
+import com.example.springbatch.reader.ExcelConfigAdvancedReader;
 import com.example.springbatch.reader.ExcelReader;
 import com.example.springbatch.reader.PersonReader;
 import com.example.springbatch.repositories.PersonRepository;
 import com.example.springbatch.services.StorageService;
 import com.example.springbatch.services.StorageServiceImpl;
 import com.example.springbatch.tasklets.TempFileTasklet;
+import com.example.springbatch.writers.InMemoryWriter;
 import com.example.springbatch.writers.PersonWriter;
 import org.springframework.batch.core.ItemReadListener;
 import org.springframework.batch.core.Job;
@@ -26,6 +29,7 @@ import org.springframework.batch.core.step.tasklet.Tasklet;
 import org.springframework.batch.core.step.tasklet.TaskletStep;
 import org.springframework.batch.repeat.RepeatStatus;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.Cache;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -37,6 +41,9 @@ public class PersonBatchConfig {
     @Autowired
     private StepBuilderFactory stepBuilderFactory;
 
+    @Autowired
+    private Cache cache;
+
     @Bean
     public StorageService storageService() {
         return new StorageServiceImpl();
@@ -46,7 +53,8 @@ public class PersonBatchConfig {
     public Job personJob(PersonRepository personRepository) {
         return jobBuilderFactory.get("personJob")
                 .incrementer(new RunIdIncrementer())
-                .flow(personStep1(personRepository))
+                .flow(configStep())
+                .next(personStep1(personRepository))
                 .end()
                 .listener(new JobListener())
                 .build();
@@ -55,12 +63,11 @@ public class PersonBatchConfig {
     @Bean
     public Step configStep() {
         return stepBuilderFactory.get("config")
-                .tasklet(new Tasklet() {
-                    @Override
-                    public RepeatStatus execute(StepContribution contribution, ChunkContext chunkContext) throws Exception {
-                        return null;
-                    }
-                }).build();
+                .listener(new StepListener())
+                .<ConfigInputDto, ConfigInputDto>chunk(3)
+                .reader(new ExcelConfigAdvancedReader())
+                .writer(new InMemoryWriter(cache))
+                .build();
     }
 
    /* @Bean
@@ -79,7 +86,7 @@ public class PersonBatchConfig {
         return stepBuilderFactory.get("person_step1")
                 .listener(new StepListener())
                 .<Person, PersonEntity> chunk(5)
-                .reader(new ExcelAdvancedReader())
+                .reader(new ExcelAdvancedReader(cache))
                 .processor(new PersonProcessor())
                 .writer(new PersonWriter(personRepository))
                 .faultTolerant()

@@ -59,15 +59,22 @@ public class TestController {
     }
 
     @PostMapping(value = "/test-post")
-    public void testPost(@RequestParam("file") MultipartFile data) throws JobInstanceAlreadyCompleteException,
+    public void testPost(@RequestParam("file") MultipartFile data/*, @RequestParam("file_input") MultipartFile fileInput*/) throws JobInstanceAlreadyCompleteException,
             JobExecutionAlreadyRunningException, JobParametersInvalidException, JobRestartException {
-        System.out.println("test");
-
 
         try {
             OutputStream outputStream = new FileOutputStream(tmpDir + data.getOriginalFilename());
 
             data.getInputStream().transferTo(outputStream);
+
+            outputStream.flush();
+            outputStream.close();
+
+           /* outputStream = new FileOutputStream(tmpDir + fileInput.getOriginalFilename());
+            fileInput.getInputStream().transferTo(outputStream);
+            outputStream.flush();
+            outputStream.close();*/
+
         }catch (IOException e) {
 
         }
@@ -76,6 +83,7 @@ public class TestController {
 
         valuesParameters.put("timestamp", new JobParameter(Instant.now().toEpochMilli()));
         valuesParameters.put("file", new JobParameter(tmpDir + data.getOriginalFilename()));
+        //valuesParameters.put("file_input", new JobParameter(tmpDir + fileInput.getOriginalFilename()));
 
         JobParameters parameters = new JobParameters(valuesParameters);
 /*
