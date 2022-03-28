@@ -16,6 +16,7 @@ public class StepListener implements StepExecutionListener {
     @Override
     public ExitStatus afterStep(StepExecution stepExecution) {
         System.out.println("test");
-        return null;
+        stepExecution.getExecutionContext().clearDirtyFlag();
+        return ExitStatus.COMPLETED;
     }
 }

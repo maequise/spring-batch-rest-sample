@@ -12,6 +12,7 @@ public class JobListener implements JobExecutionListener {
 
     @Override
     public void afterJob(JobExecution jobExecution) {
+        jobExecution.getExecutionContext().clearDirtyFlag();
         jobExecution.setStatus(BatchStatus.COMPLETED);
     }
 }
